@@ -8,7 +8,7 @@ int main(int nArguments, char* arguments[])
     k = std::atoi(arguments[1]);
   int n = 2*k;
   std::vector<std::vector<int> > matrix(n);
-  for (int i = 0; i < matrix.size(); i++)
+  for (int i = 0; i < n; i++)
     matrix[i].resize(n);
   for (int i = 0; i < n; i++)
     {
@@ -20,9 +20,9 @@ int main(int nArguments, char* arguments[])
 
   std::cout << "order " <<  n<<std::endl;
   std::cout << "dimension 2" << std::endl;
-  for (int i = 0; i < matrix.size(); i++)
+  for (int i = 0; i < n; i++)
     {
-      for (int j = 0; j < matrix.size(); j++)
+      for (int j = 0; j < n; j++)
         std::cout << matrix[i][j]<<" ";
       std::cout << std::endl;
     }
