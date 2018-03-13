@@ -1,0 +1,72 @@
+#+TITLE: Algebraic Graph Theory Algorithms For Modern Computer Architectures
+#+AUTHOR: Sven Reichard
+
+Algorithms plays a big role in AGT. 
+Examples of tasks that are solved algorithmically include the following:
+  - Isomorphism tests of coherent configurations;
+  - Finding the full automorphism group of a coherent configuration;
+  - Stabilization procedures such as Weisfeiler-Lehman, which finds
+    the smallest coherent configuration containing a given set of relations;
+  - Enumeration of mergings of coherent configurations.
+
+Whereas computers used to be modeled using a single central processing
+unit having access to a uniform random access memory this description
+is no longer accurate. 
+
+Modern computers, even in the consumer PC range, provide parallelism
+on several levels.  Wide registers can accomodate lots of data and the
+possibility of SIMD processing (Single instruction, multiple data).
+Processors contain several more or less independent processing units
+or cores. Moreover, single cores can execute interleave several
+threads of instruction, leading to apparent parallel execution (SMT,
+simultaneous multithreading).  Computers appear which contain several
+processors, and finally, large numbers of computers are interconnected
+in networks.
+
+Since each of the processors has its own memory the assumption of
+uniform memory the assumption of uniform memory access is not
+fulfilled either. But even on a single processor we deal with the fact
+that faster memory is more expensive than slower memory. This leads to
+a hierarchical organization of memory, with six or more levels of
+slower and more abundant memory, ranging from hundreds of bytes of
+registers over caches and DRAM to trillions of bytes on a hard drive.
+
+Since memory access dominates arithmetical computations in many
+problems in AGT, the layout of data in memory is crucial for high
+performant algorithms.
+
+We look at implementations of two algorithms:
+
+The algorithm for finding coherent configurations by Weisfeiler-Lehman
+was originally stated in terms of matrices:
+   + Replace entries of the given matrix with non-commuting indeterminates
+   + Compute the square of the matrix
+   + Repeat until the number of distinct entries is stable.
+     
+Two implementations have been described, with different practical
+and theoretical complexity properties. We give a new implementation
+which is practically faster on many examples and has moderate space
+requirements. 
+
+   S-rings are particular instances of association schemes.
+   They are invariant under a regular permutation group.
+   S-rings over a group $H$ are thus mergings of the centralizer
+   ring of a regular action of $H$. These correspond to certain
+   partitions of $H$.
+   
+   Ziv-Av has enumerated all S-rings over groups of order up
+   to 63. The elementary abelian group of order 64 was previously
+   dealt with by the author.
+   
+   The enumeration of mergings proceeds in two stages:
+     - Enumeration of "good" subsets of $H$.
+     - Constructing adequate partitions from those sets.
+   For most groups the first stage is the hardest part.
+   Here we need to consider all subsets of $H$, so the search space has the
+   shape of a hypercube.
+   We consider the following optimizations:
+     - Using the automorphism group to reduce the search tree.
+     - Coarse parallelism, processing different parts of the tree simultaneously.
+     - Using the self-similarity of the search space. By reordering
+       the search we can make use of SIMD instructions.
+   

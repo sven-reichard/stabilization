@@ -1,0 +1,22 @@
+* Configurations
+  + \(\Omega = \{1, \dots, n\}\)
+  + $k$, $r$ integers
+  + \(c:\Omega^k\to C\): coloring (onto), complete colored hypergraph.
+  + If $c(x) = c(y)$ and $x_i=x_j$, then $y_i=y_j$.
+  + $S(k)$ acts on $\Omega^k$ by permutation.
+  + Induced action on $C$: If $c(x)=c(y)$ and $\sigma\in S(k)$, then
+    $c(x^\sigma)=c(y^\sigma)$.
+  + We say that $(Omega, c)$ is a $k$-ary configuration of order $n$
+    and rank $|C|$.
+
+* Refinement
+
+  + Substitution: Let $x\in\Omega^k$, $y\in \Omega$, $1\le i \le
+    k$. We denote by $x_i^y$ the result of replacing $x_i$ by $y$. So
+    \[
+    (x_i^y)_j 
+= \begin{cases} y & i=j\\ x_j & i \neq j\end{cases}
+    \]
+
+  + 
+

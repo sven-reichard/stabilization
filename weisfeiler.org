@@ -1,0 +1,223 @@
+
+
+#+TITLE: An implementation of Weisfeiler-Leman
+#+AUTHOR: Sven Reichard
+
+* Markup
+  + normal text
+  + *bold text*
+  + /italic text/
+  + _underlined text_
+  + +strike-through+
+  + =verbatim=
+  + ~code~
+  + See Section [[[Automorphisms]]]
+  + \alpha \beta 
+* k-Orbits
+  + \Omega be a finite set with n elements
+  + G\le S(\Omega) a permutation group
+  + Induces a component-wise action on \Omega^k
+  + Orbits of (G,\Omega^k) are called k-orbits of G
+**
+  + 
+
+* Configurations
+  + A  colouring of
+    $\Omega^k$ is a function $c:\Omega^k\to C$, for some set of
+    colours $C$. We assume that $c$ is surjective. We call the number
+    of colours the /rank/ of $c$.
+  + For $x\in \Omega^k$ and $\sigma\in S_k$ we define $x^\sigma$ by
+    $(x^\sigma)_i = x_{\sigma(i)}$. This defines an action of $S_k$ on
+    $\Omega^k$ by permuting coordinates.
+  + Usually we are not interested in the actual values of $c$. So we
+    call two colourings $c:\Omega^k\to C$, $c':\Omega^k\to C'$
+    /equivalent/ if there is a bijection $\phi:C\to C'$ with
+    $c'=\phi\circ c$.
+  + If $c$ is a colouring of \Omega^k we call (\Omega,c) a 
+    configuration, if in addition the following hold:
+    - If for $x,y\in\Omega^k$ we have $c(x)=c(y)$, then for $0\le i,j
+      < k$ we have $x_i=x_j\Rightarrow y_i=y_j$.
+    - For $\sigma\in S_k$ and $x,y\in\Omega^k$ we have
+      $c(x)=c(y)\Rightarrow c(x^\sigma) = c(y^\sigma)$. This gives an
+      action of $S_k$ on $C$.
+  + We can also consider a configuration as a set of k-ary relations,
+    by considering sets of all k-points with a given colour.
+* Automorphisms
+  + A permutation $\phi\in S(\Omega)$ is an automorphism of
+    $W=(\Omega, c)$ if $c(x) = c(\phi(x))$ for all $x\in\Omega^k$.
+  + Here, $\phi$ acts componentwise on $\Omega^k$.
+  + More generally, $\phi$ is a colour automorphism if it permutes colours.
+  + In other words, there is a $\psi\in S_k$ such that \[\psi\circ c =
+    c\circ \phi\]
+    #+begin_src ditaa :file foo.png
+     k   c
+    Ω --------> C
+    |           |
+  φ |           | ψ
+    |           |
+    Vk          v
+    Ω --------> C
+         c
+    #+end_src
+    #+results:
+    [[file:foo.png]]
+
+*  Example: Dimension 2 
+  
+  A 2-dimensional configuration is equivalent to a set $\cal R$ of
+  binary relations on $\Omega$ such that
+  + the relations partition $\Omega^2$;
+  + each relation is either reflexive or antireflexive;
+  + if $R\in \cal R$, then $R^-1\in\cal R$.
+  This implies that each relation is either symmetric or
+  antisymmetric.
+* Stabilization
+** Substitution
+   + If $x\in\Omega^k$, $y\in\Omega$, and $0\le i<k$, we denote by
+     $x_i^y$ the result of replacing the $i$-th coordinate of $x$ by
+     $y$.
+   + So, $(x_i^y)_i = y$, and $(x_i^y)_j = x_j$ for i≠j.
+** WL refinement
+   + A configuration c' is a refinement of a configuration c if
+     for x,y\in\Omega^k, c'(x)=c'(y) implies c(x)=c(y).
+   + Given a configuration $c$ we define its WL-refinement as follows:
+     \[
+     c'(x) = (c(x), [(c(x_1^y), \ldots, c(x_k^y)) \mid y\in \Omega ] )
+     \]
+     Here, the second component is a /multiset/ of vectors obtained by
+     picking a point $y$ and substituting it for all components of $x$
+     in turn.
+   + Since $c(x)$ appears as the first component of $c'(x)$, the
+     latter is in fact a refinement.
+   + We get that $Aut(c) = Aut(c')$.
+** Coherent configurations
+   + A configuration is coherent, if $c'$ is equivalent to $c$.
+   + Any configuration $c$ has a unique coarsest coherent refinement,
+     its coherent closure $\left<\left<c\right>\right>$.
+   + \[Aut(c) = Aut\left(\left<\left<c\right>\right>\right)\]
+   + The procedure of finding the coherent closure by successive
+     refinement is known as the $k$-dimensional Weisfeiler-Leman
+     algorithm (WL_k).
+* Reformulation
+** WL_2: Graphs
+   + Given an edge-colouring of a complete graph.
+   + Given an edge (x,y) of colour $k$, and two colours $i,j$.
+   + Count the number of points $z$ such that $c(x,z)=i$, $c(z,y)=j$.
+   + Use these counts to distinguish edges of colour $k$.
+   + When no new colours appear we have a coherent graph.
+** WL_2: Matrices
+   + A two-dimensional configuration is basically a matrix.
+   + Replace all distinct entry values by non-commuting indeterminates.
+   + Replace the matrix by its square.
+   + Repeat as long as the number of distinct entries grows.
+   + This is Weisfeiler's original formulation.
+   + Can be extended to higher dimensions by defining an appropriate
+     product of tensors.
+* Previous implementations
+  + Two implementations of WL_2 were described in a 1990's paper
+    (Babel et al): a "Russian" and a "German" program
+  + Focus on practical vs. theoretical complexity.
+  + Input of size n^2.
+  + The German algorithm has a running time of O(n^3 \log n) and a
+    space requirement of O(n^3).
+  + The Russian algorithm has a running time bounded by O(n^6) and a
+    space requirement O(n^2).
+  + The latter is faster for all instances that fit into memory...
+* Example graphs
+  + The two algorithms were tested on three classes of examples
+    - A finite set of small chemical compounds.
+    - Benzene stacks.
+    - Möbius ladders.
+  + These may not be the best test cases, for various reasons.
+  + However, the latter two give examples with known results which are
+    arbitrarily scalable. 
+* Using values instead of polynomials
+  
+  During the algorithm we need to compute a matrix product. The actual
+  values of the entries is relevant only for the determination of
+  structure constants; during the stabilization we are interested only
+  in the classes of equal entries.
+
+  The entries are dot products of the form $f = \sum_k=1^n X_{i_k}
+  X_{j_k}$, where the $X_i$ are non-commuting indeterminates over the
+  integers, and $0\le i_k, j_k < r$, where $r$ is the number of
+  colors. Computation in this ring can become expensive, in the sense
+  that basic operations such as addition and multiplication cannot be
+  done in constant time.
+
+
+
+  In order to distinguish two expressions it is sufficient to find a
+  point where they evaluate differently. For a ring $R$ and $x,y\in
+  R^r$, let $f(x,y) = \sum_k x_{i_k} y_{j_k}$. Then the matrix product
+  can be computed in $R$. However it is possible that we fail to
+  distinguish some expressions.
+
+  For ease of implementation we choose the ring of integers mod
+  $2^{32}$. 
+
+  Given two fixed dot products, the probability that they coincide at
+  a random point is the same as the probability of their difference
+  being zero. So we can look at the probability $P(2^k|f(x,y))$ for
+  any $k$ and any linear combination of products $X_i X_j$.
+
+  For a random element $x$ of $R$ and $k\le 32$, we have that $P(2^k|x) =
+  2^{-k}$. The same  holds for a product $xy$, where $x$ and $y$ are
+  independent. 
+
+* Fast matrix multiplication
+
+  We have reduced the problem to $n\times n$ matrix multiplication over the
+  integers mod $2^{32}$. The straightforward algorithm for this
+  multiplication needs $O(n^3)$. However, there are faster
+  algorithms. Of course there is a lower bound of $O(n^2)$, since we
+  need to read and write $n^2$ entries. 
+
+  The best known upper bound for the complexity is
+  $O(n^{2.373})$. However, the constant factors for these advanced
+  methods are prohibitively high. A practical subcubic algorithm was
+  first described by Strassen who noted that the product of $2\times
+  2$ matrices can be computed using only seven
+  multiplications (and a number of additions). Applying this
+  recursively leads to a running time of $O(n^{\log_2 7}) =
+  O(n^{2.81})$. 
+
+* Reusing results
+  
+  It has been noted by Babel that we can give a bound on the number of
+  times each triangle is considered. In fact, if there are m new
+  colors in one iteration we can choose the recoloring in such a way
+  that at least n/m arcs retain their color.
+
+  If we look at an ordered triangle (x,y,z) it contributes to the to
+  the product (x,z). Let us say that $R(x,y) = i$, $R(y,z) = j$ and
+  $R(x,z) = k$. If the color of the arc $(x,y)$ is changed to $i'$
+  then the product has to be recomputed by subtracting $ij$ and and
+  adding $i'j$. However, the number of new arcs of size $i'$ is at
+  most the number of old arcs of size $i$ divided by the number of
+  colors assigned to arcs of color $i$. In particular it is at most
+  $i/2$. Therefore each arc is recolored at most $\log_2 (n^2)$
+  times. (This is a very rough estimate.)
+  
+  Each arc contributes to $2n$ products, so we need to perform
+  $4n\log_2 n$ updates of products.
+
+  If we keep all products in memory we do not need essentially more
+  memory to perform the updates. 
+
+* Memory layout
+* Parallelization
+* Algorithm outline
+  1) The input is given in the matrix $M$.
+  2) Preprocessing to distinguish the diagonal and make the algebra symmetric.
+  3) Select random numbers x_i, y_i, where i runs through all colors.
+  4) Compute the product $P=M(x)*M(y)$ over $R$; use fast multiplication.
+  5) Repeat the following until no new colors appear.
+     + Collect the set of pairs $(M[x][y], P[x][y])$, for $x,y\in \Omega$
+     + Decide for each orignal color which class of arcs will retain
+       that color.
+     + Extend $x$ and $y$ by adding additional values for all new colors.
+     + For each arc (x,z) that changes its color from $i$ to $i'$
+       - Update all relevant products
+  6) 
+* 
