@@ -34,6 +34,10 @@ public:
   int operator[](const std::vector<int>& coordinates) const;
   void read(std::istream& input);
   void write(std::ostream& output) const;
+  int getOrder() const
+  {
+    return order;
+  };
 private:
   int order;
   int dimension;
@@ -129,6 +133,14 @@ bool nextTuple(std::vector<int>& tuple, int maxValue)
   return false;
 };
 
+
+
+void firstSet(std::vector<int>& set)
+{
+  int s = set.size();
+  for (int i = 0; i < s; i++)
+    set[i] = i;
+};
 bool nextSet(std::vector<int>& set, int maxValue)
 // assume that set is an increasing list of values between 0 and maxValue-1
 // change it to the next such list (lexicographically)
@@ -152,21 +164,44 @@ void printVector(const std::vector<int>& v)
   std::cout << std::endl;
 }
 
+std::vector<int>
+apply(const std::vector<int>& v, const std::vector<int>& w)
+{
+
+  int s = w.size();
+  std::vector<int> result(s);
+  for (int i = 0; i < s; i++)
+    result[i] = v[w[i]];
+  return result;
+};
+
+
+void
+collect(const tensor& t)
+{
+  std::vector<int> triple(3);
+  triple[0] = triple[1] = 0;
+  int n = t.getOrder();
+  for (int i = 0; i < n; i++)
+    {
+      triple[2] = i;
+      std::vector<int> colors(3);
+      std::vector<int>::iterator color = colors.begin();
+      std::vector<int> coordinates(2);
+      for (firstSet(coordinates); color != colors.end();
+	   color++, nextSet(coordinates, 3))
+	*color = t[apply(triple, coordinates)];
+      std::cout << i << ": ";
+      printVector(colors);
+    }
+}
+
 int main(void)
 {
   tensor t;
-  //t.read(std::cin);
-  //t.write(std::cout);
+  t.read(std::cin);
+  collect(t);
+  t.write(std::cout);
 
-  int s = 3;
-  std::vector<int> v(s);
-  for (int i = 0; i < s; i++)
-    v[i] = i;
-  int count = 0;
-  do {
-    count ++;
-    printVector(v);
-  } while (nextSet(v, 7));
-  std::cout << "found " << count << " sets" << std::endl;
   return 0;
 };
