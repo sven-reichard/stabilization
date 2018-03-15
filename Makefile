@@ -1,7 +1,7 @@
 CXXFLAGS = -Wall -O3 -I/home/sven/include
 LDFLAGS = -L/home/sven/lib
 
-all: test weisfeiler mobius benzene
+all: test weisfeiler mobius benzene tensor
 	./test
 clean:
 	rm -f weisfeiler mobius benzene *.o test
