@@ -8,8 +8,8 @@
 # include <iterator>
 # include <cassert>
 # include <string>
-
-// perfect hash for vectors of integers
+# include <map>
+// perfect hash for vectors of integers less than <order>
 int horner(const std::vector<int>& coordinates, int order)
 {
   int result = 0;
@@ -142,7 +142,8 @@ void firstSet(std::vector<int>& set)
     set[i] = i;
 };
 bool nextSet(std::vector<int>& set, int maxValue)
-// assume that set is an increasing list of values between 0 and maxValue-1
+// assume that set is an increasing list of values
+// between 0 and maxValue-1
 // change it to the next such list (lexicographically)
 {
   int i;
@@ -160,7 +161,8 @@ bool nextSet(std::vector<int>& set, int maxValue)
 
 void printVector(const std::vector<int>& v)
 {
-  std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, " "));
+  std::copy(v.begin(), v.end(),
+	    std::ostream_iterator<int>(std::cout, " "));
   std::cout << std::endl;
 }
 
@@ -181,6 +183,9 @@ collect(const tensor& t)
 {
   std::vector<int> triple(3);
   triple[0] = triple[1] = 0;
+  triple[1] = 1;
+  typedef std::map<std::vector<int>, int> Multiset;
+  Multiset multiset;
   int n = t.getOrder();
   for (int i = 0; i < n; i++)
     {
@@ -193,7 +198,17 @@ collect(const tensor& t)
 	*color = t[apply(triple, coordinates)];
       std::cout << i << ": ";
       printVector(colors);
+      multiset[colors] ++;
     }
+  std::cout<<"multiset:"<<std::endl;
+  for (Multiset::iterator it = multiset.begin();
+       it != multiset.end();
+       it++)
+    {
+      std::cout << it->second<<" * ";
+      printVector(it->first);
+    }
+  
 }
 
 int main(void)
@@ -201,7 +216,7 @@ int main(void)
   tensor t;
   t.read(std::cin);
   collect(t);
-  t.write(std::cout);
+  //  t.write(std::cout);
 
   return 0;
 };
