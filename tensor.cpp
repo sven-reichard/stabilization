@@ -115,6 +115,7 @@ void tensor::read(std::istream& input)
 {
   std::string word;
   int n, k;
+  rank = 0;
   input >> word >> n;
   expect(word, "order");
   input >> word >> k;
@@ -123,6 +124,7 @@ void tensor::read(std::istream& input)
   for (std::vector<int>::iterator entry = data.begin(); entry != data.end(); entry ++)
     {
       input >> *entry;
+      if (*entry > rank) rank = *entry;
       if (!input)
 	{
 	  std::cerr<<"input ended unexpectedly "<<std::endl;
@@ -131,7 +133,8 @@ void tensor::read(std::istream& input)
 	  exit(1);
 	}
     }
-
+  rank ++;
+  
 }
 
 
@@ -245,7 +248,8 @@ collect( tensor& t)
 	//	std::cout<<"new color: " << position << std::endl;
 	newTensor[pair] = position;
       }
-  
+  newTensor.setRank(allResults.size());
+  std::cout << "rank: " << newTensor.getRank() << std::endl;
   std::swap(t, newTensor);
 }
 
@@ -253,12 +257,12 @@ int main(void)
 {
   tensor t;
   t.read(std::cin);
-  collect(t);
+  int oldrank;
+  do {
+    oldrank = t.getRank();
+    std::cout << "rank: " << t.getRank() << std::endl;
+    collect(t);
+  } while (oldrank != t.getRank());
   t.write(std::cout);
-  collect(t);
-  t.write(std::cout);
-  collect(t);
-  t.write(std::cout);
-
   return 0;
 };
