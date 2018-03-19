@@ -9,6 +9,7 @@
 # include <cassert>
 # include <string>
 # include <map>
+# include <algorithm>
 // perfect hash for vectors of integers less than <order>
 int horner(const std::vector<int>& coordinates, int order)
 {
@@ -38,9 +39,18 @@ public:
   {
     return order;
   };
+  int getRank() const
+  {
+    return rank;
+  };
+  void setRank(int r)
+  {
+    rank = r;
+  };
 private:
   int order;
   int dimension;
+  int rank;
   std::vector<int> data;
 };
 
@@ -61,6 +71,12 @@ void tensor::resize(int n, int k)
 
 
 int tensor::operator[](const std::vector<int>& coordinates) const
+{
+  assert((signed int)coordinates.size() == dimension);
+  int entry = horner(coordinates, order);
+  return data[entry];
+};
+int& tensor::operator[](const std::vector<int>& coordinates)
 {
   assert((signed int)coordinates.size() == dimension);
   int entry = horner(coordinates, order);
@@ -179,36 +195,58 @@ apply(const std::vector<int>& v, const std::vector<int>& w)
 
 
 void
-collect(const tensor& t)
+collect( tensor& t)
 {
-  std::vector<int> triple(3);
-  triple[0] = triple[1] = 0;
-  triple[1] = 1;
   typedef std::map<std::vector<int>, int> Multiset;
-  Multiset multiset;
+  std::vector<Multiset> allResults;
+  std::vector<int> pair(2);
+  tensor newTensor(t);
   int n = t.getOrder();
-  for (int i = 0; i < n; i++)
-    {
-      triple[2] = i;
-      std::vector<int> colors(3);
-      std::vector<int>::iterator color = colors.begin();
-      std::vector<int> coordinates(2);
-      for (firstSet(coordinates); color != colors.end();
-	   color++, nextSet(coordinates, 3))
-	*color = t[apply(triple, coordinates)];
-      std::cout << i << ": ";
-      printVector(colors);
-      multiset[colors] ++;
-    }
-  std::cout<<"multiset:"<<std::endl;
-  for (Multiset::iterator it = multiset.begin();
-       it != multiset.end();
-       it++)
-    {
-      std::cout << it->second<<" * ";
-      printVector(it->first);
-    }
+  for (pair[0]= 0; pair[0] < n; pair[0]++)
+    for (pair[1] = 0; pair[1] < n; pair[1] ++)
+      {
+	std::vector<int> triple(3);
+	triple[0] = pair[0];
+	triple[1] = pair[1];
+	
+	Multiset multiset;
+	int n = t.getOrder();
+	for (int i = 0; i < n; i++)
+	  {
+	    triple[2] = i;
+	    std::vector<int> colors(3);
+	    std::vector<int>::iterator color = colors.begin();
+	    std::vector<int> coordinates(2);
+	    for (firstSet(coordinates); color != colors.end();
+		 color++, nextSet(coordinates, 3))
+	      *color = t[apply(triple, coordinates)];
+	    multiset[colors] ++;
+	  }
+	/*
+	std::cout<<"multiset:"<<std::endl;
+	for (Multiset::iterator it = multiset.begin();
+	     it != multiset.end();
+	     it++)
+	  {
+	    std::cout << it->second<<" * ";
+	    printVector(it->first);
+	  }
+	*/
+	int position;
+	std::vector<Multiset>::const_iterator pointer =
+	  std::find(allResults.begin(), allResults.end(), multiset);
+	if (pointer == allResults.end())
+	  {
+	    position = allResults.size();
+	    allResults.push_back(multiset);
+	  }
+	else
+	  position = pointer - allResults.begin();
+	//	std::cout<<"new color: " << position << std::endl;
+	newTensor[pair] = position;
+      }
   
+  std::swap(t, newTensor);
 }
 
 int main(void)
@@ -216,7 +254,11 @@ int main(void)
   tensor t;
   t.read(std::cin);
   collect(t);
-  //  t.write(std::cout);
+  t.write(std::cout);
+  collect(t);
+  t.write(std::cout);
+  collect(t);
+  t.write(std::cout);
 
   return 0;
 };
