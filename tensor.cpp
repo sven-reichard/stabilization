@@ -213,7 +213,7 @@ printMultiset(const Multiset& multiset)
 void
 collect( tensor& aTensor)
 {
-  const int t = 3;
+  const int t = 4;
   const int k = 2;
   const int numberOfColors = t*(t-1)/2; // binomial coefficient
   typedef std::map<std::vector<int>, int> Multiset;
@@ -224,23 +224,35 @@ collect( tensor& aTensor)
   for (pair[0]= 0; pair[0] < n; pair[0]++)
     for (pair[1] = 0; pair[1] < n; pair[1] ++)
       {
+	//	if (pair[1] != pair[0]) continue;
+	//std::cout << "considering ";
+	//printVector(pair);
 	std::vector<int> triple(t);
 	triple[0] = pair[0];
 	triple[1] = pair[1];
 	
 	Multiset multiset;
 	int n = aTensor.getOrder();
-	for (int i = 0; i < n; i++)
+	std::vector<int> aSet(t-2);
+	//	firstSet(aSet);
+	for (;;)
 	  {
-	    triple[2] = i;
+	    triple[2] = aSet[0];
+	    triple[3] = aSet[1];
 	    std::vector<int> colors(numberOfColors);
 	    std::vector<int>::iterator color = colors.begin();
 	    std::vector<int> coordinates(2);
 	    for (firstSet(coordinates); color != colors.end();
 		 color++, nextSet(coordinates, t))
-	      *color = aTensor[apply(triple, coordinates)];
+	      {
+		*color = aTensor[apply(triple, coordinates)];
+	      }
 	    multiset[colors] ++;
+	    if (!nextTuple(aSet, n))
+	      break;
 	  }
+	//std::cout << "multiset: " << std::endl;
+	//printMultiset(multiset);
 	int position;
 	std::vector<Multiset>::const_iterator pointer =
 	  std::find(allResults.begin(), allResults.end(), multiset);
@@ -263,12 +275,15 @@ int main(void)
 {
   tensor t;
   t.read(std::cin);
-  int oldrank;
-  do {
-    oldrank = t.getRank();
-    std::cout << "rank: " << t.getRank() << std::endl;
-    collect(t);
-  } while (oldrank != t.getRank());
+  if (true)
+    {
+      int oldrank;
+      do {
+	oldrank = t.getRank();
+	std::cout << "rank: " << t.getRank() << std::endl;
+	collect(t);
+      } while (oldrank != t.getRank());
+    }
   t.write(std::cout);
   return 0;
 };
