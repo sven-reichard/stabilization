@@ -1,4 +1,7 @@
 *~
+*.o
 tensor
 mobius
 benzene
+weisfeiler
+test
