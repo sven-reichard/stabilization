@@ -10,6 +10,8 @@
 # include <string>
 # include <map>
 # include <algorithm>
+typedef std::map<std::vector<int>, int> Multiset;
+
 // perfect hash for vectors of integers less than <order>
 int horner(const std::vector<int>& coordinates, int order)
 {
@@ -196,6 +198,17 @@ apply(const std::vector<int>& v, const std::vector<int>& w)
   return result;
 };
 
+void
+printMultiset(const Multiset& multiset)
+{
+  for (Multiset::const_iterator it = multiset.begin();
+       it != multiset.end();
+       it++)
+    {
+      std::cout << it->second<<" * ";
+      printVector(it->first);
+    }
+};
 
 void
 collect( tensor& aTensor)
