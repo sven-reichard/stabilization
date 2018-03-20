@@ -198,43 +198,36 @@ apply(const std::vector<int>& v, const std::vector<int>& w)
 
 
 void
-collect( tensor& t)
+collect( tensor& aTensor)
 {
+  const int t = 3;
+  const int k = 2;
+  const int numberOfColors = t*(t-1)/2; // binomial coefficient
   typedef std::map<std::vector<int>, int> Multiset;
   std::vector<Multiset> allResults;
   std::vector<int> pair(2);
-  tensor newTensor(t);
-  int n = t.getOrder();
+  tensor newTensor(aTensor);
+  int n = aTensor.getOrder();
   for (pair[0]= 0; pair[0] < n; pair[0]++)
     for (pair[1] = 0; pair[1] < n; pair[1] ++)
       {
-	std::vector<int> triple(3);
+	std::vector<int> triple(t);
 	triple[0] = pair[0];
 	triple[1] = pair[1];
 	
 	Multiset multiset;
-	int n = t.getOrder();
+	int n = aTensor.getOrder();
 	for (int i = 0; i < n; i++)
 	  {
 	    triple[2] = i;
-	    std::vector<int> colors(3);
+	    std::vector<int> colors(numberOfColors);
 	    std::vector<int>::iterator color = colors.begin();
 	    std::vector<int> coordinates(2);
 	    for (firstSet(coordinates); color != colors.end();
-		 color++, nextSet(coordinates, 3))
-	      *color = t[apply(triple, coordinates)];
+		 color++, nextSet(coordinates, t))
+	      *color = aTensor[apply(triple, coordinates)];
 	    multiset[colors] ++;
 	  }
-	/*
-	std::cout<<"multiset:"<<std::endl;
-	for (Multiset::iterator it = multiset.begin();
-	     it != multiset.end();
-	     it++)
-	  {
-	    std::cout << it->second<<" * ";
-	    printVector(it->first);
-	  }
-	*/
 	int position;
 	std::vector<Multiset>::const_iterator pointer =
 	  std::find(allResults.begin(), allResults.end(), multiset);
@@ -250,7 +243,7 @@ collect( tensor& t)
       }
   newTensor.setRank(allResults.size());
   std::cout << "rank: " << newTensor.getRank() << std::endl;
-  std::swap(t, newTensor);
+  std::swap(aTensor, newTensor);
 }
 
 int main(void)
