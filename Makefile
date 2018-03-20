@@ -4,7 +4,7 @@ LDFLAGS = -L/home/sven/lib
 all: test weisfeiler mobius benzene tensor
 	./test
 clean:
-	rm -f weisfeiler mobius benzene *.o test
+	rm -f weisfeiler tensor mobius benzene *.o test
 test: test.o
 	g++ -o test -L/home/sven/lib test.o -lxunit
 test.o: test.cpp
