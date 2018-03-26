@@ -211,10 +211,8 @@ printMultiset(const Multiset& multiset)
 };
 
 void
-collect( tensor& aTensor)
+collect( tensor& aTensor, int t)
 {
-  const int t = 4;
-  const int k = 2;
   const int numberOfColors = t*(t-1)/2; // binomial coefficient
   typedef std::map<std::vector<int>, int> Multiset;
   std::vector<Multiset> allResults;
@@ -224,9 +222,6 @@ collect( tensor& aTensor)
   for (pair[0]= 0; pair[0] < n; pair[0]++)
     for (pair[1] = 0; pair[1] < n; pair[1] ++)
       {
-	//	if (pair[1] != pair[0]) continue;
-	//std::cout << "considering ";
-	//printVector(pair);
 	std::vector<int> triple(t);
 	triple[0] = pair[0];
 	triple[1] = pair[1];
@@ -234,11 +229,10 @@ collect( tensor& aTensor)
 	Multiset multiset;
 	int n = aTensor.getOrder();
 	std::vector<int> aSet(t-2);
-	//	firstSet(aSet);
 	for (;;)
 	  {
-	    triple[2] = aSet[0];
-	    triple[3] = aSet[1];
+	    for (int i = 0; i < t-2; i++)
+	      triple[i+2] = aSet[i];
 	    std::vector<int> colors(numberOfColors);
 	    std::vector<int>::iterator color = colors.begin();
 	    std::vector<int> coordinates(2);
@@ -251,8 +245,6 @@ collect( tensor& aTensor)
 	    if (!nextTuple(aSet, n))
 	      break;
 	  }
-	//std::cout << "multiset: " << std::endl;
-	//printMultiset(multiset);
 	int position;
 	std::vector<Multiset>::const_iterator pointer =
 	  std::find(allResults.begin(), allResults.end(), multiset);
@@ -263,27 +255,34 @@ collect( tensor& aTensor)
 	  }
 	else
 	  position = pointer - allResults.begin();
-	//	std::cout<<"new color: " << position << std::endl;
 	newTensor[pair] = position;
       }
   newTensor.setRank(allResults.size());
-  std::cout << "rank: " << newTensor.getRank() << std::endl;
   std::swap(aTensor, newTensor);
 }
 
 int main(void)
 {
-  tensor t;
-  t.read(std::cin);
+  int maximalT = 4;
+  tensor aTensor;
+  aTensor.read(std::cin);
   if (true)
     {
       int oldrank;
+      int t = 2;
       do {
-	oldrank = t.getRank();
-	std::cout << "rank: " << t.getRank() << std::endl;
-	collect(t);
-      } while (oldrank != t.getRank());
+	oldrank = aTensor.getRank();
+	std::cout<<"t = " << t << std::endl;
+	collect(aTensor, t);
+	std::cout << "rank: " << aTensor.getRank() << std::endl;
+	if (oldrank == aTensor.getRank())
+	  t++;
+	else
+	  {
+	    t = 2;
+	  }
+      } while (t <= maximalT);
     }
-  t.write(std::cout);
+  aTensor.write(std::cout);
   return 0;
 };
