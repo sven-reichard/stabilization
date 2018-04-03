@@ -1,8 +1,7 @@
 CXXFLAGS = -Wall -O3 -I/home/sven/include -g -ggdb
 LDFLAGS = -L/home/sven/lib
 
-all: test weisfeiler mobius benzene tensor
-	./test
+all: weisfeiler mobius benzene tensor
 clean:
 	rm -f weisfeiler tensor mobius benzene *.o test
 test: test.o

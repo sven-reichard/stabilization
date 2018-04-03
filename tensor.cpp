@@ -234,7 +234,7 @@ collect( tensor& aTensor, int t)
 	    for (int i = 0; i < t-2; i++)
 	      triple[i+2] = aSet[i];
 	    std::vector<int> colors(numberOfColors);
-	    std::vector<int>::iterator color = colors.begin();
+	    auto color = colors.begin();
 	    std::vector<int> coordinates(2);
 	    for (firstSet(coordinates); color != colors.end();
 		 color++, nextSet(coordinates, t))
@@ -246,8 +246,7 @@ collect( tensor& aTensor, int t)
 	      break;
 	  }
 	int position;
-	std::vector<Multiset>::const_iterator pointer =
-	  std::find(allResults.begin(), allResults.end(), multiset);
+	auto pointer = std::find(allResults.begin(), allResults.end(), multiset);
 	if (pointer == allResults.end())
 	  {
 	    position = allResults.size();
