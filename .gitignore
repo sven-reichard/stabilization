@@ -1,7 +1,14 @@
 *~
 *.o
+Examples/*
 tensor
 mobius
 benzene
 weisfeiler
 test
+decrease-arity
+increase-arity
+check-t
+rank
+stabilize
+

@@ -1,12 +1,13 @@
 
 # Table of Contents
 
-1.  [Outline](#org8906981)
-2.  [Filters](#orgddfcc8e)
-3.  [File format](#orgfd451f2)
+1.  [Outline](#orgd99f28e)
+2.  [Building](#orgcedf520)
+3.  [Filters](#org88e2f4d)
+4.  [File format](#orgc57f383)
 
 
-<a id="org8906981"></a>
+<a id="orgd99f28e"></a>
 
 # Outline
 
@@ -16,7 +17,14 @@ written in C++); however, it can be used without programming by
 using the filters or programs that are provided.
 
 
-<a id="orgddfcc8e"></a>
+<a id="orgcedf520"></a>
+
+# Building
+
+A simple "make" should to the trick. Assuming g++ is installed.
+
+
+<a id="org88e2f4d"></a>
 
 # Filters
 
@@ -35,7 +43,7 @@ The filters provided so far are
     written out, otherwise it isn't.
 
 
-<a id="orgfd451f2"></a>
+<a id="orgc57f383"></a>
 
 # File format
 

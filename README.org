@@ -3,6 +3,8 @@
   on a small library. It is possible to use the library directly (it's
   written in C++); however, it can be used without programming by
   using the filters or programs that are provided.
+* Building
+  A simple "make" should to the trick. Assuming g++ is installed.
 * Filters
   Following the Unix philosophy, the programs that are included
   perform  small and specific transformations on configurations. They
