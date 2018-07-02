@@ -19,7 +19,7 @@ int main(int nArguments, char* arguments[])
         }
       matrix[6*i][6*i+5] = 1;
       matrix[6*i+5][6*i] = 1;
-      
+
     }
   for (int i = 0; i < k-1; i++)
     for (int j = 0; j < 6; j+= 2)

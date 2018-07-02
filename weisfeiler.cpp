@@ -101,7 +101,7 @@ void read()
   expect(word, "order");
   cin >> word >> dimension;
   expect(word, "dimension");
-  
+
   resizeMatrix(matrix);
   resizeMatrix(matrix2);
   resizeMatrix(X);
@@ -110,9 +110,9 @@ void read()
   for (int i= 0; i < order; i++)
     for (int j = 0; j < order; j++)
       {
-	cin >> matrix[i][j];
-	if (matrix[i][j] > rank)
-	  rank = matrix[i][j];
+        cin >> matrix[i][j];
+        if (matrix[i][j] > rank)
+          rank = matrix[i][j];
       }
   rank ++;
 };
@@ -182,7 +182,7 @@ symmetrize()
              (iter != values[oldColor].end()) && (*iter != value);
              iter ++, pos ++);
         matrix2[x][y] = pos;
-             
+
       }
   rank = partialSum.back() + values.back().size();
   swap(matrix, matrix2);

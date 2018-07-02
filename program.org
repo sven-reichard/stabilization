@@ -1,0 +1,1136 @@
+#+OPTIONS: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+OPTIONS: author:t broken-links:nil c:nil creator:nil
+#+OPTIONS: d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t num:t
+#+OPTIONS: p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t
+#+OPTIONS: timestamp:t title:t toc:t todo:t |:t
+#+TITLE: program
+#+DATE: <2018-06-20 Mi>
+#+AUTHOR: Sven Reichard
+#+EMAIL: sven.reichard@tu-dresden.de
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 25.1.1 (Org mode 9.1.13)
+
+* Current files
+
+  
+
+
+** ordering.cpp
+#+BEGIN_SRC c++ :tangle ordering.cpp
+# include <iostream>
+# include <iomanip>
+const unsigned int odd_bits = 0x55555555u;
+const unsigned int even_bits = 2*odd_bits;
+
+unsigned int increment_x(unsigned int value)
+{
+  unsigned int odd = value & odd_bits;
+  unsigned int even = value & even_bits;
+  unsigned int result = (value | even_bits) + 1;
+  result &= odd_bits;
+  result |= even;
+  return result;
+};
+
+unsigned int increment_y(unsigned int value)
+{
+  unsigned int odd = value & odd_bits;
+  unsigned int even = value & even_bits;
+  unsigned int result = (value | odd_bits) + 1;
+  result &= even_bits;
+  result |= odd;
+  return result;
+};
+
+int main(void)
+{
+  for (int i = 0, v = 0; i < 16; i++, v = increment_y(v))
+    {
+      for (int j = 0, w = v; j < 16; j++, w = increment_x(w))
+        std::cout << std::setw(3) << w << "  ";
+      std::cout << std::endl;
+    }
+}
+
+#+END_SRC
+
+** strassen.cpp 
+#+BEGIN_SRC c++ :tangle strassen.cpp
+# include <iostream>
+# include <iomanip>
+# include <vector>
+# include <cstdlib>
+# include <ctime>
+using std::vector;
+using namespace std;
+
+int order = 2;
+typedef vector<vector<unsigned int> > Matrix;
+Matrix A;
+Matrix B;
+Matrix product;
+Matrix product2;
+
+void initialize()
+{
+  A.resize(order);
+  B.resize(order);
+  product.resize(order);
+  product2.resize(order);
+  for (int i = 0; i < order; i++)
+    {
+      A[i].resize(order);
+      B[i].resize(order);
+      product[i].resize(order);
+      product2[i].resize(order);
+      for (int j = 0; j < order; j++)
+        {
+          A[i][j] = rand();
+          B[i][j] = rand();
+        }
+    }
+}
+
+void
+normalProduct(Matrix& result, const Matrix& A, const Matrix& B)
+{
+  for (int i = 0; i < result.size(); i++)
+    for (int j = 0; j < result.size(); j++)
+      {
+        unsigned value = 0;
+        for (int k = 0; k < result.size(); k++)
+          value += A[i][k] * B[k][j];
+        result[i][j] = value;
+      }
+}
+
+void
+printMatrix(const Matrix& M)
+{
+  for (int i = 0; i < M.size(); i++)
+    {
+      for (int j = 0; j < M[i].size(); j++)
+        cout << setw(10) << M[i][j] << " ";
+      cout << endl;
+    }
+}
+
+int main(void)
+{
+  srand(std::time(0));
+  initialize();
+  normalProduct(product, A, B);
+  printMatrix(product);
+  return 0;
+}
+
+#+END_SRC
+** tensor.h
+#+BEGIN_SRC c++ :tangle tensor.h
+# pragma once
+# include <vector>
+# include <iosfwd>
+
+class tensor
+{
+public:
+  tensor();
+  void resize(int order, int dimension);
+  int& operator[](const std::vector<int>& coordinates);
+  int operator[](const std::vector<int>& coordinates) const;
+  void read(std::istream& input);
+  void write(std::ostream& output) const;
+  int getOrder() const
+  {
+    return order;
+  };
+  int getRank() const
+  {
+    return rank;
+  };
+  void setRank(int r)
+  {
+    rank = r;
+  };
+  int getDimension() const
+  {
+    return dimension;
+  };
+private:
+  int order;
+  int dimension;
+  int rank;
+  std::vector<int> data;
+};
+void collect( tensor& aTensor, int t);
+tensor increaseArity(const tensor& aTensor);
+tensor decreaseArity(const tensor& aTensor);
+
+#+END_SRC
+
+** tensor.cpp
+#+BEGIN_SRC c++ :tangle tensor.cpp
+  // tensor.cpp
+  // (c) Sven Reichard 2018
+  //
+  // GPL etc...
+
+  # include <vector>
+  # include <iostream>
+  # include <fstream>
+  # include <iterator>
+  # include <cassert>
+  # include <string>
+  # include <map>
+  # include <algorithm>
+  # include <numeric>
+  # include <iomanip>
+  # include <tensor.h>
+  # include <collection.h>
+  # include <tuples.h>
+  typedef std::map<std::vector<int>, int> Multiset;
+
+  // perfect hash for vectors of integers less than <order>
+  int horner(const std::vector<int>& coordinates, int order)
+  {
+    int result = 0;
+    for (std::vector<int>::const_iterator entry = coordinates.begin();
+         entry != coordinates.end();
+         entry++)
+      {
+        int value = *entry;
+        assert(value >= 0);
+        assert(value < order);
+        result = result * order + value;
+      }
+    return result;
+  };
+
+
+  tensor::tensor()
+  {
+
+  };
+
+  void tensor::resize(int n, int k)
+  {
+    order = n;
+    dimension = k;
+    int size = 1;
+    for (int i = 0; i < dimension; i++)
+      size *= order;
+    data.resize(size);
+  }
+
+
+  int tensor::operator[](const std::vector<int>& coordinates) const
+  {
+    assert((signed int)coordinates.size() == dimension);
+    int entry = horner(coordinates, order);
+    return data[entry];
+  };
+  int& tensor::operator[](const std::vector<int>& coordinates)
+  {
+    assert((signed int)coordinates.size() == dimension);
+    int entry = horner(coordinates, order);
+    return data[entry];
+  };
+
+
+  void
+  tensor::write(std::ostream& output) const
+  {
+    output << "order " << order << std::endl;
+
+    output << "dimension " << dimension << std::endl;
+    int rank = 0;
+    for (unsigned int i = 0; i < data.size(); i++)
+      {
+        output << std::setw(4) <<  data[i];
+        if (data[i] > rank) rank = data[i];
+        // insert newlines for structure
+        int k = i+1;
+        while (k > 0 && (k%order == 0))
+          {
+            output << std::endl;
+            k /= order;
+          }
+      }
+    //  output << "rank " << rank+1 <<std::endl;
+  }
+
+  void expect(const std::string& s1, const std::string& s2)
+  {
+    if (s1 != s2)
+      {
+        std::cerr << "expected " << s2 << ", got " << s1 << std::endl;
+        exit(1);
+      }
+  }
+
+  void tensor::read(std::istream& input)
+  {
+    std::string word;
+    int n, k;
+    rank = 0;
+    input >> word >> n;
+//    expect(word, "order");
+    input >> word >> k;
+  //  expect(word, "dimension");
+    resize(n, k);
+    for (std::vector<int>::iterator entry = data.begin(); entry != data.end(); entry ++)
+      {
+        input >> *entry;
+        if (*entry > rank) rank = *entry;
+        if (!input)
+          {
+            std::cerr<<"input ended unexpectedly "<<std::endl;
+            std::cerr<<"read " << entry - data.begin() << " values" << std::endl;
+            std::cerr<<"expected " << data.size() << " values" << std::endl;
+            exit(1);
+          }
+      }
+    rank ++;
+
+  }
+
+
+  void printVector(const std::vector<int>& v)
+  {
+    std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, " "));
+    std::cout << std::endl;
+  }
+
+  std::vector<int>
+  apply(const std::vector<int>& v, const std::vector<int>& w)
+  {
+    int s = w.size();
+    std::vector<int> result(s);
+    for (int i = 0; i < s; i++)
+      result[i] = v[w[i]];
+    return result;
+  };
+
+  void
+  printMultiset(const Multiset& multiset)
+  {
+    for (auto it = multiset.begin(); it != multiset.end(); it++)
+      {
+        std::cout << it->second<<" * ";
+        printVector(it->first);
+      }
+  };
+
+  typedef std::map<std::vector<int>, int> Multiset;
+
+  Multiset collectColors(int t, const tensor& aTensor,
+                         const std::vector<int>& edge)
+  {
+    Multiset multiset;
+    const int numberOfColors = t*(t-1)/2; // binomial coefficient
+    const int k = aTensor.getDimension();
+    std::vector<int> tuple(t);
+    std::copy(edge.begin(), edge.end(), tuple.begin());
+    int n = aTensor.getOrder();
+    std::vector<int> aSet(t-k);
+    for (;;)
+      {
+        std::copy(aSet.begin(), aSet.end(), tuple.begin() + k);
+        std::vector<int> colors(numberOfColors);
+        auto color = colors.begin();
+        std::vector<int> coordinates(k);
+        for (firstSet(coordinates); color != colors.end();
+             color++, nextSet(coordinates, t))
+          {
+            ,*color = aTensor[apply(tuple, coordinates)];
+          }
+        multiset[colors] ++;
+        if (!nextTuple(aSet, n))
+          break;
+      }
+    return multiset;
+  };
+
+  void
+  collect( tensor& aTensor, int t)
+  {
+    const int k = aTensor.getDimension();
+    const int n = aTensor.getOrder();
+    collection<Multiset> results;
+    std::vector<int> edge(k);
+    tensor newTensor(aTensor);
+
+    do
+    {
+      Multiset multiset = collectColors(t,  aTensor, edge);
+      newTensor[edge] = results[multiset];
+    } while (nextTuple(edge, n));
+    newTensor.setRank(results.size());
+    std::swap(aTensor, newTensor);
+  }
+
+  void
+  stabilize(tensor& aTensor, int maximalT)
+  {
+
+    int oldrank;
+    int t = 2;
+    do {
+      oldrank = aTensor.getRank();
+      std::cerr<<"t = " << t << std::endl;
+      collect(aTensor, t);
+      std::cerr << "rank: " << aTensor.getRank() << std::endl;
+      if (oldrank == aTensor.getRank())
+        t++;
+      else
+        t = 2;
+    } while (t <= maximalT);
+  }
+
+  void
+  writeVector(const std::vector<int>& v)
+  {
+    std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, ", "));
+    std::cout <<std::endl;
+  }
+
+  tensor
+  increaseArity(const tensor& aTensor)
+  {
+    tensor result;
+    const int n = aTensor.getOrder();
+    const int k = aTensor.getDimension();
+    result.resize(n, k+1);
+    std::vector<int> coordinates(k+1);
+    collection<std::vector<int> > allTuples;
+    do {
+      std::vector<int> colors;
+      colors.reserve((k+1)*k/2);
+      std::vector<int> edge(k);
+      std::vector<int> set(k);
+      firstSet(set);
+      do {
+        edge = apply(coordinates, set);
+        colors.push_back(aTensor[edge]);
+      } while (nextSet(set, k+1));
+
+      result[coordinates] = allTuples[colors];
+    } while (nextTuple(coordinates, n));
+    return result;
+  }
+
+  tensor
+  decreaseArity(const tensor& aTensor)
+  {
+    tensor result;
+    const int n = aTensor.getOrder();
+    const int k = aTensor.getDimension();
+    result.resize(n, k-1);
+    std::vector<int> coordinates(k-1);
+    collection<std::map<int, int>> allResults;
+    do {
+      std::vector<int> tuple(k);
+      std::copy(coordinates.begin(), coordinates.end(), tuple.begin());
+      std::map<int, int> m;
+      for (tuple.back() = 0; tuple.back() < n; tuple.back() ++)
+        m[aTensor[tuple]] ++;
+      result[coordinates] = allResults[m];
+    } while (nextTuple(coordinates, n));
+    return result;
+  }
+
+#+END_SRC
+
+** test.cpp
+#+BEGIN_SRC c++ :tangle test.cpp
+# include <xunit.h>
+# include <map>
+class Product
+{
+  typedef std::map<std::pair<int,int>, int> map_type;
+  map_type values;
+public:
+  int operator () (int x, int y) const
+  {
+    std::pair<int, int> p = std::make_pair(x,y);
+    map_type::const_iterator it = values.find(p);
+    if (it == values.end())
+      return 0;
+    return it->second;
+  };
+  void increment(int x, int y)
+  {
+    values[std::make_pair(x,y)] ++;
+  };
+};
+
+class ProductTest
+  : public TestCase<ProductTest>
+{
+public:
+  ProductTest(memberFunction f)
+    :TestCase(f)
+  {};
+  void testEmptyProduct()
+  {
+    Product p;
+    testAssertEqual(0, p(1,2));
+  };
+  void testIncrement()
+  {
+    Product p;
+    p.increment(1,2);
+    testAssertEqual(1, p(1,2));
+  };
+};
+int main()
+{
+  TestSuite suite;
+  suite.add(new ProductTest(std::mem_fun(&ProductTest::testEmptyProduct)));
+  suite.add(new ProductTest(std::mem_fun(&ProductTest::testIncrement)));
+   TestResult result;
+   suite.run(result);
+   result.printReport();
+  return 0;
+};
+
+#+END_SRC
+** tuples.h
+#+BEGIN_SRC c++ :tangle tuples.h
+# pragma once
+# include <vector>
+
+bool nextTuple(const std::vector<int>::iterator begin,
+	       const std::vector<int>::iterator end,
+	       int maxValue);
+
+
+bool nextTuple(std::vector<int>& tuple, int maxValue);
+void firstSet(std::vector<int>& set);
+
+
+bool nextSet(const std::vector<int>::iterator begin, const std::vector<int>::iterator end, int maxValue);
+  
+bool nextSet(std::vector<int>& set, int maxValue);
+
+
+#+END_SRC
+
+** tuples.cpp
+#+BEGIN_SRC c++ tuples.cpp
+
+
+  # include <tuples.h>
+  # include <numeric>
+  bool nextTuple(const std::vector<int>::iterator begin,
+                 const std::vector<int>::iterator end,
+                 int maxValue)
+  // enumerate [n]^k lexicographically
+  {
+    for (auto entry = end-1; entry >= begin; --entry)
+      {
+        if (++(*entry) < maxValue)
+          return true;
+        ,*entry = 0;
+      }
+    return false;
+  };
+
+
+  bool nextTuple(std::vector<int>& tuple, int maxValue)
+  {
+    return nextTuple(tuple.begin(), tuple.end(), maxValue);
+  }
+
+  void firstSet(std::vector<int>& set)
+  {
+    std::iota(set.begin(), set.end(), 0);
+  };
+
+  bool nextSet(const std::vector<int>::iterator begin, const std::vector<int>::iterator end, int maxValue)
+  // assume that [begin,end) is an increasing list of values
+  // between 0 and maxValue-1
+  // change it to the next such list (lexicographically)
+  {
+    auto element = end-1;
+    for (; element >= begin; element--)
+      if ( *element < maxValue - (end-element))
+        break;
+    if (element < begin) return false;
+    std::iota(element, end, ++(*element)); // increase *element and fill up remaining values
+    return true;
+  }
+  
+  bool nextSet(std::vector<int>& set, int maxValue)
+  {
+    return nextSet(set.begin(), set.end(), maxValue);
+  }
+
+#+END_SRC
+
+** weisfeiler.cpp
+#+BEGIN_SRC c++ :tangle weisfeiler.cpp
+  // Implementation of the Weisfeiler-Leman Algorithm for
+  // colored graphs.
+  //
+  // (c) 2017 Sven Reichard
+  //
+  // Input is taken from standard input.
+  // Format (white space is ignored):
+  // r n a11 a12 a13.... ann
+  // that is, the rank and the order followed by the rows of the adjacency matrix.
+  // All entries are assumed to be unsigned integers.
+  // The diagonal relations are separated at the beginning of the program.
+  //
+  // Example: Mobius ladder of order 8
+  // 2
+  // 8
+  // 0 1 0 0 1 0 0 1 
+  // 1 0 1 0 0 1 0 0 
+  // 0 1 0 1 0 0 1 0 
+  // 0 0 1 0 1 0 0 1 
+  // 1 0 0 1 0 1 0 0 
+  // 0 1 0 0 1 0 1 0 
+  // 0 0 1 0 0 1 0 1 
+  // 1 0 0 1 0 0 1 0 
+
+
+  # include <iostream>
+  # include <iomanip>
+  # include <vector>
+  # include <set>
+  # include <map>
+  # include <list>
+  # include <iterator>
+  # include <algorithm>
+  # include <numeric>
+  # include <ctime>
+  # include <cstdlib>
+  # include <cassert>
+
+  using  std::vector;
+  using  std::map;
+  using  std::set;
+  using  std::list;
+  using  std::cout;
+  using  std::endl;
+  using  std::cin;
+
+  int order;
+  int rank;
+  typedef vector<vector<int> > Matrix;
+  Matrix matrix;
+  Matrix matrix2;
+  Matrix X;
+  Matrix Y;
+
+  vector<int> x_hash;
+  vector<int> y_hash;
+
+  class
+  counting_iterator
+  {
+    int data;
+  public:
+    counting_iterator(int value)
+      : data(value)
+    {};
+    counting_iterator& operator++()
+    {
+      ++ data;
+      return *this;
+    };
+    int operator *() const
+    {
+      return data;
+    }
+  };
+
+  void
+  resizeMatrix(Matrix& m, int o=order)
+  {
+    m.resize(o);
+    //  for_each(m.begin(), m.end(), bind2nd(mem_fun(&vector<int>::resize),o));
+    for (unsigned int i = 0; i < m.size(); i++)
+      m[i].resize(o);
+  }
+
+  void expect(const std::string& s1, const std::string& s2)
+  {
+    if (s1 != s2)
+      {
+        std::cerr << "expected " << s2 << ", got " << s1 << std::endl;
+        exit(1);
+      }
+  }
+
+  void read()
+  {
+    //  cin >> rank;
+    int dimension;
+    std::string word;
+    cin >> word >> order;
+    expect(word, "order");
+    cin >> word >> dimension;
+    expect(word, "dimension");
+  
+    resizeMatrix(matrix);
+    resizeMatrix(matrix2);
+    resizeMatrix(X);
+    resizeMatrix(Y);
+    rank = 0;
+    for (int i= 0; i < order; i++)
+      for (int j = 0; j < order; j++)
+        {
+          cin >> matrix[i][j];
+          if (matrix[i][j] > rank)
+            rank = matrix[i][j];
+        }
+    rank ++;
+  };
+
+  void normalize()
+  {  
+    set<int> diagonal;
+    set<int> offDiagonal;
+    for (int i = 0; i < order; i++)
+      for (int j = 0; j < order; j++)
+        if (i == j)
+          diagonal.insert(matrix[i][j]);
+        else
+          offDiagonal.insert(matrix[i][j]);
+    vector<int> diagonalColors(*diagonal.rbegin()+1);
+    vector<int> offColors(*offDiagonal.rbegin()+1);
+    rank = 0;
+    for (set<int>::const_iterator iter = diagonal.begin();
+         iter != diagonal.end(); iter++)
+      diagonalColors[*iter] = rank++;
+    for (set<int>::const_iterator iter = offDiagonal.begin();
+         iter != offDiagonal.end(); iter++)
+      offColors[*iter] = rank++;
+
+    for (int i = 0; i < order; i++)
+      for (int j = 0; j < order; j++)
+        if (i == j)
+          matrix[i][i] = diagonalColors[matrix[i][i]];
+        else
+          matrix[i][j] = offColors[matrix[i][j]];
+  };
+
+  void write()
+  {
+    cout << order << endl;
+    for (int i = 0; i < order; i++)
+      {
+        for (int j = 0; j < order; j ++)
+          cout << std::setw(3) << matrix[i][j] << " ";
+        cout << endl;
+      }
+    cout << "rank " << rank << endl;
+  };
+
+  void
+  symmetrize()
+  {
+    vector<set<int> > values(rank);
+    for (int x = 0; x < order; x++)
+      for (int y = 0; y < order; y++)
+        {
+          int color = matrix[x][y];
+          int otherColor = matrix[y][x];
+          values[color].insert(otherColor);
+        }
+    vector<int> partialSum(values.size());
+    partialSum[0] = 0;
+    for (unsigned int i = 1; i < partialSum.size(); i++)
+      partialSum[i] = partialSum[i-1] + values[i-1].size();
+    for (int x = 0; x < order; x++)
+      for (int y = 0; y < order; y++)
+        {
+          int oldColor = matrix[x][y];
+          int pos = partialSum[oldColor];
+          int value = matrix[y][x];
+          for (set<int>::const_iterator iter = values[oldColor].begin();
+               (iter != values[oldColor].end()) && (*iter != value);
+               iter ++, pos ++);
+          matrix2[x][y] = pos;
+             
+        }
+    rank = partialSum.back() + values.back().size();
+    swap(matrix, matrix2);
+  }
+
+  void
+  collectColors(vector<map<int, int> >& valueMap,
+                const vector<set<int> >& values )
+  {
+    rank = 0;
+    for (unsigned int i = 0; i < valueMap.size(); i++)
+      for (set<int>::const_iterator iter = values[i].begin();
+           (iter != values[i].end());
+           iter++, rank++)
+        valueMap[i][*iter] = rank;
+    rank = rank;
+  }
+
+  void
+  recolorMatrix2(vector<map<int, int> >& valueMap)
+  {
+
+    for (int x = 0; x < order; x++)
+      for (int y = 0; y < order; y++)
+        {
+          const int oldColor = matrix[x][y];
+          const int value = matrix2[x][y];
+          matrix2[x][y] = valueMap[oldColor][value];
+        }
+  }
+
+  void
+  renormalizeColors(vector<set<int> >& values)
+  {
+    for (int x = 0; x < order; x++)
+      for (int y = 0; y < order; y++)
+        {
+          values[matrix[x][y]].insert(matrix2[x][y]);
+        }
+    vector<map<int, int> > valueMap(values.size());
+    collectColors(valueMap, values);
+    recolorMatrix2(valueMap);
+  }
+
+  void
+  selectRandomValues()
+  {
+    x_hash.resize(rank);
+    generate(x_hash.begin(), x_hash.end(), rand);
+    y_hash.resize(rank);
+    generate(y_hash.begin(), y_hash.end(), rand);
+  }
+
+  int
+  totalDegree(const vector<int>& color, int x)
+  {
+
+    int result = 0;
+    for (int y = 0; y < order; y++)
+      result += x_hash[matrix[x][y]] * y_hash[color[y]];
+    return result;
+  }
+
+  void
+  normalizeVector(std::vector<int>& vec)
+  {
+    set<int> allValues(vec.begin(), vec.end());
+    map<int, int> m;
+    int c = 0;
+    for (set<int>::const_iterator iter = allValues.begin(); iter != allValues.end(); iter++)
+      m[*iter] = c++;
+    for (int i = 0; i < order; i++)
+      vec[i] = m[vec[i]];
+  };
+
+  vector<int>
+  degreePartition()
+  {
+    vector<int> color(order);
+    for (int i = 0; i < order; i++)
+      color[i] = matrix[i][i];
+    int numberOfCells = 0;
+    while (true)
+      {
+        selectRandomValues();
+        vector<int> newColor(order);
+        normalizeVector(newColor);
+        int newNumber = (*max_element(newColor.begin(), newColor.end())) + 1;
+        if (newNumber == numberOfCells)
+          break;
+        numberOfCells = newNumber;
+        swap(color, newColor);
+      }
+    return color;
+  }
+
+  void
+  substituteValues()
+  {
+    for (int x = 0; x < order; x++)
+      for (int y = 0; y < order; y++)
+        {
+          X[x][y] = x_hash[matrix[x][y]];
+          Y[x][y] = y_hash[matrix[x][y]];
+        }
+  }
+
+  bool WeisfeilerLemanStep()
+  {
+    const int oldRank = rank;
+    vector<set<int> > values(rank);
+    selectRandomValues();
+    substituteValues();
+    for (int x = 0; x < order; x++)
+      for (int y = 0; y < order; y++)
+        {
+          matrix2[x][y] = inner_product(X[x].begin(), X[x].end(), Y[y].begin(), 0);
+          //values[matrix[x][y]].insert(matrix2[x][y]);
+        }
+    renormalizeColors( values );
+    swap(matrix, matrix2);
+    return oldRank != rank;
+  }
+
+  int main(void)
+  {
+    srand(time(0));
+    read();
+    normalize();
+    symmetrize();
+    //degreePartition();
+    //degreePartition();
+    //return 0;
+    while (WeisfeilerLemanStep() )
+      std::cerr << "rank " << rank << endl;
+    write();
+      return 0;
+  };
+
+
+  // Local Variables:
+  // compile-command: "make"
+  // End:
+
+#+END_SRC
+
+** collection.h
+#+BEGIN_SRC c++ :tangle collection.h
+# pragma once
+
+// we use this to collect invariants
+// we construct an injective function T->N
+// if the object is know we return the known value
+// else we assign a new value.
+template <typename T>
+class collection
+{
+  std::vector<T> data;
+public:
+  int operator[]( const T& multiset)
+  // should use hashing
+  {
+    for (unsigned int i = 0; i < data.size(); i++)
+      if (multiset == data[i])
+	return i;
+    data.push_back(multiset);
+    return data.size() - 1;
+  };
+  int size() const
+  {
+    return data.size();
+  };
+};
+
+#+END_SRC
+
+
+
+* Applications
+** main.cpp
+
+#+BEGIN_SRC c++ :tangle main.cpp
+  # include <tensor.h>
+  # include <iostream>
+  # include <fstream>
+  int main(int argc, const char* argv[])
+  {
+
+    tensor aTensor;
+    aTensor.read(std::cin);
+    int min_t = aTensor.getDimension() + 1;
+    int max_t = min_t;
+    if (argc > 1)
+      max_t = atoi(argv[1]);
+    int t = min_t;
+    while (t <= max_t)
+      {
+        std::cerr << "t = " << t << std::endl;
+        int rank = aTensor.getRank();
+        collect(aTensor, t);
+        if (rank == aTensor.getRank())
+          t ++;
+        else
+          t = min_t;
+      }
+    aTensor.write(std::cout);
+    return 0;
+  };
+
+#+END_SRC
+
+** check-t.cpp
+#+BEGIN_SRC c++ :tangle check-t.cpp
+  # include <tensor.h>
+  # include <iostream>
+  # include <fstream>
+
+  // Filter for graphs with the t-vertex condition
+  // t is given as an argument; default is 3.
+  int main(int argc, const char* argv[])
+  {
+    int t = 3;
+    if (argc > 1)
+      t = atoi(argv[1]);
+    tensor aTensor;
+    while(true)
+      {
+        aTensor.read(std::cin);
+        if (!std::cin) break;
+        const int rank = aTensor.getRank();
+        collect(aTensor, t);
+        if (rank ==  aTensor.getRank())
+          aTensor.write(std::cout);
+      }
+    return 0;
+  };
+
+#+END_SRC
+
+** decrease-arity
+#+BEGIN_SRC c++ :tangle decrease-arity.cpp
+# include <tensor.h>
+# include <iostream>
+
+int main(void)
+{
+  tensor aTensor;
+  aTensor.read(std::cin);
+  aTensor = decreaseArity(aTensor);
+  aTensor.write(std::cout);
+  return 0;
+};
+
+#+END_SRC
+
+** increase-arity
+#+BEGIN_SRC c++ :tangle increase-arity.cpp
+# include <tensor.h>
+# include <iostream>
+
+int main(void)
+{
+  tensor aTensor;
+  aTensor.read(std::cin);
+  aTensor = increaseArity(aTensor);
+  aTensor.write(std::cout);
+  return 0;
+};
+
+#+END_SRC
+** rank
+#+BEGIN_SRC c++ :tangle rank.cpp
+  # include <tensor.h>
+  # include <iostream>
+
+  int main(void)
+  {
+    for (;;)
+      {
+        tensor aTensor;
+        aTensor.read(std::cin);
+        if (!std::cin)
+          break;
+        std::cout << "order " << aTensor.getOrder() << ", rank " << aTensor.getRank()<<std::endl;
+      }
+    return 0;
+  };
+
+#+END_SRC
+
+* Example data
+** benzene.cpp
+#+BEGIN_SRC c++ :tangle benzene.cpp
+  # include <iostream>
+  # include <vector>
+  # include <cstdlib> // for atoi
+  int main(int nArguments, char* arguments[])
+  {
+    int k = 3;
+    if (nArguments > 1)
+      k = std::atoi(arguments[1]);
+    int n = 6*k;
+    std::vector<std::vector<int> > matrix(n);
+    for (unsigned int i = 0; i < matrix.size(); i++)
+      matrix[i].resize(n);
+    for (int i = 0; i < k; i++)
+      {
+        for (int j = 0; j < 5; j++)
+          {
+            matrix[6*i+j][6*i+j+1] = 1;
+            matrix[6*i+j+1][6*i+j] = 1;
+          }
+        matrix[6*i][6*i+5] = 1;
+        matrix[6*i+5][6*i] = 1;
+      
+      }
+    for (int i = 0; i < k-1; i++)
+      for (int j = 0; j < 6; j+= 2)
+        {
+          matrix[6*i + j + (i&1)][6*(i+1) + j + (i&1)] = 1;
+          matrix[6*(i+1) + j + (i&1)][6*(i) + j + (i&1)] = 1;
+        }
+    for (int i = 0; i < n; i++)
+      matrix[i][i] = 2;
+    std::cout << "order " << n << std::endl;
+    std::cout << "dimension "<< 2<<std::endl;
+    for (unsigned int i = 0; i < matrix.size(); i++)
+      {
+        for (unsigned int j = 0; j < matrix.size(); j++)
+          std::cout << matrix[i][j]<<" ";
+        std::cout << std::endl;
+      }
+    return 0; 
+  }
+#+END_SRC
+
+** mobius.cpp
+
+#+BEGIN_SRC c++ :tangle mobius.cpp
+# include <iostream>
+# include <vector>
+# include <cstdlib> // for atoi
+int main(int nArguments, char* arguments[])
+{
+  int k = 3;
+  if (nArguments > 1)
+    k = std::atoi(arguments[1]);
+  int n = 2*k;
+  std::vector<std::vector<int> > matrix(n);
+  for (int i = 0; i < n; i++)
+    matrix[i].resize(n);
+  for (int i = 0; i < n; i++)
+    {
+      matrix[i][(n+i+1)%n] = 1;
+      matrix[i][(n+i-1)%n] = 1;
+      matrix[i][(n+i+k)%n] = 1;
+      matrix[i][i] = 2;
+    }
+
+  std::cout << "order " <<  n<<std::endl;
+  std::cout << "dimension 2" << std::endl;
+  for (int i = 0; i < n; i++)
+    {
+      for (int j = 0; j < n; j++)
+        std::cout << matrix[i][j]<<" ";
+      std::cout << std::endl;
+    }
+  return 0; 
+}
+
+#+END_SRC
+
+
+
+* Makefile
+** Makefile
+
