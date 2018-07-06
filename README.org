@@ -12,14 +12,25 @@
   or more configurations to standard output.
 
   The filters provided so far are
-  + increase-arity
-  + decrease-arity
+  + increase-arity: take k-ary configuration and construct (k+1)-ary
+    configuration from it
+  + decrease-arity: construct (k-1)-ary configuration from k-ary
+    configuration 
   + check-t checks whether the t-vertex condition is satisfied; if <t>
     is not given, the arity plus one is used, checking ordinary
     coherence. If the condition is satisfied, the configuration is
     written out, otherwise it isn't.
+  + stabilize <t>: perform (k,t)-WL stabilization. If t is not given
+    it defaults to k+1, i.e., the usual k-dim WL is performed
+  + weisfeiler: optimised and probabilistic version for the classical
+    (2,3)-stabilization 
 * File format
   The format is both human and computer readable. It contains  the
   keywords "order" and "dimension", followed by the order and arity of
   the structure, respectively. After that the colors appear in the
   lexicographical order of the multiedges.
+* Example computations:
+  #+BEGIN_SRC shell
+    cat shrikhande.wl | ./stabilize
+    cat shrikhande.wl | ./stabilize 4
+  #+END_SRC

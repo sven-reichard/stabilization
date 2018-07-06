@@ -1,13 +1,14 @@
 
 # Table of Contents
 
-1.  [Outline](#orgd99f28e)
-2.  [Building](#orgcedf520)
-3.  [Filters](#org88e2f4d)
-4.  [File format](#orgc57f383)
+1.  [Outline](#org969945f)
+2.  [Building](#org522712d)
+3.  [Filters](#orge5ef441)
+4.  [File format](#org56e680c)
+5.  [Example computations:](#org551932f)
 
 
-<a id="orgd99f28e"></a>
+<a id="org969945f"></a>
 
 # Outline
 
@@ -17,14 +18,14 @@ written in C++); however, it can be used without programming by
 using the filters or programs that are provided.
 
 
-<a id="orgcedf520"></a>
+<a id="org522712d"></a>
 
 # Building
 
 A simple "make" should to the trick. Assuming g++ is installed.
 
 
-<a id="org88e2f4d"></a>
+<a id="orge5ef441"></a>
 
 # Filters
 
@@ -35,15 +36,21 @@ or more configurations to standard output.
 
 The filters provided so far are
 
--   increase-arity
--   decrease-arity
+-   increase-arity: take k-ary configuration and construct (k+1)-ary
+    configuration from it
+-   decrease-arity: construct (k-1)-ary configuration from k-ary
+    configuration
 -   check-t checks whether the t-vertex condition is satisfied; if <t>
     is not given, the arity plus one is used, checking ordinary
     coherence. If the condition is satisfied, the configuration is
     written out, otherwise it isn't.
+-   stabilize <t>: perform (k,t)-WL stabilization. If t is not given
+    it defaults to k+1, i.e., the usual k-dim WL is performed
+-   weisfeiler: optimised and probabilistic version for the classical
+    (2,3)-stabilization
 
 
-<a id="orgc57f383"></a>
+<a id="org56e680c"></a>
 
 # File format
 
@@ -51,4 +58,12 @@ The format is both human and computer readable. It contains  the
 keywords "order" and "dimension", followed by the order and arity of
 the structure, respectively. After that the colors appear in the
 lexicographical order of the multiedges.
+
+
+<a id="org551932f"></a>
+
+# Example computations:
+
+    cat shrikhande.wl | ./stabilize
+    cat shrikhande.wl | ./stabilize 4
 
